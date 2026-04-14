@@ -1,4 +1,6 @@
-export const API_BASE_URL = '/api';
+export const API_BASE_URL = import.meta.env.PROD 
+  ? 'https://hostel-complaint-management-system-pd6u.onrender.com/api' 
+  : '/api';
 
 export const BLOCKS = ['A', 'B', 'C', 'D'];
 export const FLOORS = ['Ground', '1st', '2nd', '3rd'];
