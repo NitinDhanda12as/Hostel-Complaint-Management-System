@@ -14,10 +14,16 @@ const app = express();
 connectDB();
 
 // Middleware
+// app.use(cors({
+//   origin: 'http://localhost:5173',
+//   credentials: true
+// }));
+
+
 app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
+  origin: "https://hostel-complaint-management-system-nu.vercel.app"
 }));
+
 app.use(express.json());
 
 // Routes
@@ -43,3 +49,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
