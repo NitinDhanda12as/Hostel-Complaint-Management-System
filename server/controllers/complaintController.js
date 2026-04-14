@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Complaint = require('../models/Complaint');
 const Student = require('../models/Student');
 const { checkAutoUpgrade } = require('../utils/autoUpgrade');
@@ -71,21 +72,24 @@ exports.getMyComplaints = async (req, res) => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+    // CRITICAL: Cast string ID to ObjectId for aggregation $match
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
     if (section === 'active') {
       query = {
-        submittedBy: userId,
+        submittedBy: userObjectId,
         type: 'Personal',
         status: { $in: ['Submitted', 'In Progress'] }
       };
     } else if (section === 'pending') {
       query = {
-        submittedBy: userId,
+        submittedBy: userObjectId,
         type: 'Personal',
         status: 'Done from Hostel Side'
       };
     } else if (section === 'resolved') {
       query = {
-        submittedBy: userId,
+        submittedBy: userObjectId,
         type: 'Personal',
         status: 'Work Completed',
         resolvedAt: { $gte: sevenDaysAgo }
@@ -93,7 +97,7 @@ exports.getMyComplaints = async (req, res) => {
     } else {
       // Return all personal complaints
       query = {
-        submittedBy: userId,
+        submittedBy: userObjectId,
         type: 'Personal'
       };
     }
@@ -295,6 +299,7 @@ exports.getStats = async (req, res) => {
     }
 
     // Student stats
+    const userObjectId = new mongoose.Types.ObjectId(userId);
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -304,8 +309,8 @@ exports.getStats = async (req, res) => {
       // My Complaints: Personal (Submitted/Active/Pending) + General Upvoted (Submitted/Active/Pending)
       Complaint.countDocuments({
         $or: [
-          { submittedBy: userId, type: 'Personal', status: { $in: activeStatuses } },
-          { type: 'General', 'upvotes.studentId': userId, status: { $in: activeStatuses } }
+          { submittedBy: userObjectId, type: 'Personal', status: { $in: activeStatuses } },
+          { type: 'General', 'upvotes.studentId': userObjectId, status: { $in: activeStatuses } }
         ]
       }),
       // Floor Issues: All active General complaints on this floor
@@ -313,14 +318,14 @@ exports.getStats = async (req, res) => {
       // Pending: Items awaiting verification from this specific student or MHMC on their floor
       Complaint.countDocuments({
         $or: [
-          { submittedBy: userId, type: 'Personal', status: 'Done from Hostel Side' },
+          { submittedBy: userObjectId, type: 'Personal', status: 'Done from Hostel Side' },
           { type: 'General', block, floor, status: 'Done from Hostel Side' }
         ]
       }),
       // Resolved: All completed items relevant to the floor/student in the last 7 days
       Complaint.countDocuments({
         $or: [
-          { submittedBy: userId, type: 'Personal', status: 'Work Completed', resolvedAt: { $gte: sevenDaysAgo } },
+          { submittedBy: userObjectId, type: 'Personal', status: 'Work Completed', resolvedAt: { $gte: sevenDaysAgo } },
           { type: 'General', block, floor, status: 'Work Completed', resolvedAt: { $gte: sevenDaysAgo } }
         ]
       })
